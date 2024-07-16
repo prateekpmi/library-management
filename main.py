@@ -1,5 +1,7 @@
 from datetime import datetime
 import mysql.connector
+from tabulate import tabulate
+
 mydb =mysql.connector.connect(host='localhost',user='root',password='jan2008lucknow',database='libraryn') 
 mycursor=mydb.cursor()
 
@@ -21,35 +23,50 @@ def addmember():
         query = "SELECT * FROM MEMBERS WHERE email = %s"
         mycursor.execute(query, (email,))
         saved_user = mycursor.fetchone()
-        print('User data saved successfully. User Id: ', saved_user[0])
+        print("\n")
+        print('\033[1m' + 'User data saved successfully. User Id: ' + str(saved_user[0]) + '\033[0m')
                                        
 def addbook():
         addbook=input('Enter book_name - ')
-        book_id=int(input('Enter book_id - '))
         title=input('Enter title - ')
         author=input('Author name - ')
         genre=input('Enter genre of book - ')
         isbn=int(input('Enter ISBN - '))
         publication_year=int(input('Enter publication_year - '))
         status=input('Enter status of book - ')
-        query1="INSERT INTO BOOKS(bookid,title,author,genre,isbn,publication_year,status) VALUES(%s, %s, %s, %s, %s, %s, %s)"
-        values1=(book_id,title,author,genre,isbn,publication_year,status)
+        query1="INSERT INTO BOOKS(title,author,genre,isbn,publication_year,status) VALUES( %s, %s, %s, %s, %s, %s)"
+        values1=(title,author,genre,isbn,publication_year,status)
         mycursor.execute(query1,values1)
         mydb.commit()
-        print('done!')
+        
+        # Retrive saved user data
+        query = "SELECT * FROM BOOKS WHERE title = %s"
+        mycursor.execute(query, (title,))
+        saved_book = mycursor.fetchone()
+        print("\n")
+        print('\033[1m' + 'Data saved successfully. Book Id: ' + str(saved_book[0]) + '\033[0m')
 
 def borrowbook():
         borrowbook=input('Enter borrow_book - ')
-        borrowing_id=int(input('Enter borrowing_id - '))
         book_id=int(input('Enter book_id - '))
         member_id=int(input('Enter member_id - '))
-        fine=int(input('Enter fine - '))
-        join_date_str=input('Enter join date (YYYY-MM-DD) - ')
-        join_date = datetime.strptime(join_date_str, '%Y-%m-%d')
-        query2="INSERT INTO BORROWING(borrowing_id,book_id,member_id,fine,borrow_date) VALUES(%s, %s, %s, %s,%s)"
-        value2=(borrowing_id,book_id,member_id,fine,join_date)
+        borrow_date=input('Enter join date (YYYY-MM-DD) - ')
+        due_date=input('Enter due date (YYYY-MM-DD) - ')
+        borrow_date = datetime.strptime(borrow_date, '%Y-%m-%d')
+        due_date=datetime.strptime(due_date, '%Y-%m-%d')
+        query2="INSERT INTO BORROWING(book_id,member_id,fine,borrow_date,due_date) VALUES(%s, %s,0,%s,%s)"
+        value2=(book_id,member_id,borrow_date,due_date)
         mycursor.execute(query2,value2)
         mydb.commit()
+
+        # Retrive saved user data
+        query = "SELECT * FROM BORROWING WHERE member_id = %s"
+        mycursor.execute(query, (member_id,))
+        saved_borrowing = mycursor.fetchone()
+        print("\n")
+        print('\033[1m' + 'Data saved successfully. Borrowing Id: ' + str(saved_borrowing[0]) + '\033[0m')
+
+
         print('done!!')
 
 def returnbook():
@@ -69,31 +86,32 @@ def returnbook():
         print("done!!!")
 
 def seemembers():
-     mycusor=mydb.cursor()
-     query="select * from members"
-     mycursor.execute(query)
-     records=mycursor.fetchall()
-     for row in records:
-          print(row)
-     print('done')
+    mycursor = mydb.cursor()
+    query = "select * from members"
+    mycursor.execute(query)
+    records = mycursor.fetchall()
+    headers = ["Member Id", "Joining Date", "Name", "Email", "Address"]
+    print(tabulate(records, headers, tablefmt="pretty"))
      
 def seebooks():
-     mucursor=mydb.cursor()
-     query="select * from books"
-     mycursor.execute(query)
-     records=mycursor.fetchall()
-     for row in records:
-          print(row)
-     print("done")
+    mycursor = mydb.cursor()
+    query = "select * from books"
+    mycursor.execute(query)
+    records = mycursor.fetchall()
+    
+    # Define column headers
+    headers = ["Book ID", "Title", "Author", "Genre", "ISBN", "Publication Year", "Status"]
+    
+    # Print the table
+    print(tabulate(records, headers, tablefmt="pretty"))
 
 def borrowing():
-     mucursor=mydb.cursor()
-     query="select * from borrowing"
-     mycursor.execute(query)
-     records=mycursor.fetchall()
-     for row in records:
-          print(row)
-     print("done")
+    mycursor = mydb.cursor()
+    query = "select * from borrowing"
+    mycursor.execute(query)
+    records = mycursor.fetchall()
+    headers = ["Borrowing ID", "Book ID", "Member ID", "Borrow Date", "Due Date", "Return Date", "Fine"]
+    print(tabulate(records, headers, tablefmt="pretty"))
      
      
 
@@ -121,39 +139,41 @@ def borrowing():
 #         print(c)
 #         print(d)
 def options():
-      a='''Choose an option
-1. Add member
-2. Add book 
-3. Borrow book
-4. Return book
-5. See all members
-6. See all books
-7. See borrowing'''
-      print(a)       
+    print("\n" + "-"*50)
+    print("Library Management Application".center(50))
+    print("-"*50 + "\n")
+    print("Choose an option:")
+    print("1. Add member")
+    print("2. Add book")
+    print("3. Borrow book")
+    print("4. Return book")
+    print("5. See all members")
+    print("6. See all books")
+    print("7. See borrowings")
+    print("\n" + "-"*50)      
   
 def fun():
-    show = options()
-    choice=int(input('Enter any choice - '))
-    if choice==1:
+    options()
+    choice = int(input('Enter your choice: '))
+    print("\n" + "-"*50)
+    if choice == 1:
         addmember()
-    elif choice==2:
+    elif choice == 2:
         addbook()
-    elif choice==3:
+    elif choice == 3:
         borrowbook()
-    elif choice==4:
+    elif choice == 4:
         returnbook()
-    elif choice==5:
-        a='see all members'
-        print(a)
+    elif choice == 5:
         seemembers()
-    elif choice==6:
-        b='see all books'
-        print(b)
+    elif choice == 6:
+        print("See all books")
         seebooks()
-    elif choice==7:
-        c='see borrowings'
-        print(c)
+    elif choice == 7:
+        print("See borrowings")
         borrowing()
     else:
-        print('Invalid option - ')
+        print("Invalid option")
+    print("-"*50 + "\n")
+
 fun()
