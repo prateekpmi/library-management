@@ -47,7 +47,6 @@ def addbook():
         print('\033[1m' + 'Data saved successfully. Book Id: ' + str(saved_book[0]) + '\033[0m')
 
 def borrowbook():
-        borrowbook=input('Enter borrow_book - ')
         book_id=int(input('Enter book_id - '))
         member_id=int(input('Enter member_id - '))
         borrow_date=input('Enter join date (YYYY-MM-DD) - ')
@@ -69,21 +68,28 @@ def borrowbook():
 
         print('done!!')
 
-def returnbook():
-        returnbook=input('Enter return_book')
-        borrowing_id=int(input('Enter borrowing_id - '))
-        book_id=int(input('Enter book_id - '))
-        member_id=int(input('Enter member_id - '))
-        returning_id=int(input('Enter returning_id - '))
-        fine=int(input('Enter fine - '))
-        join_date_str1=input('Enter join date (YYYY-MM-DD) - ')
-        join_date1= datetime.strptime(join_date_str1, '%Y-%m-%d')
+def calculateFine(due_date, fine_per_day):
+    current_date = datetime.now().date()  # Get the current date as a date object
+    if current_date > due_date:
+        days_overdue = (current_date - due_date).days
+        return days_overdue * fine_per_day
+    else:
+        return 0
 
-        query3="UPDATE BORROWING SET RETURN_DATE=%s WHERE BORROWING_ID=%s"
-        values3=(join_date1,borrowing_id)
-        mycursor.execute(query3,values3)
-        mydb.commit()
-        print("done!!!")
+def returnbook():
+    borrowingId = int(input("Enter borrowing id: "))
+    query = "SELECT * FROM BORROWING WHERE borrowing_id = %s" 
+    mycursor.execute(query,(borrowingId,))
+    books = mycursor.fetchall()
+    fine = calculateFine(books[0][4],20)
+    current_date = datetime.now().date()
+    print("Fine is: Rs ",fine)
+    query="UPDATE BORROWING SET RETURN_DATE=%s,fine=%s WHERE BORROWING_ID=%s"
+    mycursor.execute(query,(current_date,fine,borrowingId))
+    mydb.commit()
+    print("Book returned successfully")
+        
+        
 
 def seemembers():
     mycursor = mydb.cursor()
@@ -98,11 +104,7 @@ def seebooks():
     query = "select * from books"
     mycursor.execute(query)
     records = mycursor.fetchall()
-    
-    # Define column headers
     headers = ["Book ID", "Title", "Author", "Genre", "ISBN", "Publication Year", "Status"]
-    
-    # Print the table
     print(tabulate(records, headers, tablefmt="pretty"))
 
 def borrowing():
@@ -112,6 +114,10 @@ def borrowing():
     records = mycursor.fetchall()
     headers = ["Borrowing ID", "Book ID", "Member ID", "Borrow Date", "Due Date", "Return Date", "Fine"]
     print(tabulate(records, headers, tablefmt="pretty"))
+
+
+    
+    
      
      
 
@@ -172,6 +178,9 @@ def fun():
     elif choice == 7:
         print("See borrowings")
         borrowing()
+    elif choice ==8:
+        print("return book")
+        returnbook()
     else:
         print("Invalid option")
     print("-"*50 + "\n")
